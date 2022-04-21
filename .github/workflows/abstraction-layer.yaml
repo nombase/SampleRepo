@@ -1,0 +1,35 @@
+name: spark-abstraction-layer-job-build
+on:    
+  pull_request:
+    paths:
+      - '.github/workflows/**'
+    branches:
+      - test1
+  pull_request_review:
+    paths:
+      - '.github/workflows/**'
+    types: [submitted]
+    branches: ['test1']
+    
+jobs:
+  check-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      go:  ${{ steps.changes.outputs.go }}
+    steps:
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            go:
+              - '.github/workflows/*.yaml'
+  # This workflow contains a single job called "build"
+  airflow-spark:
+     uses: /.github/workflows/reusable-sbt-workflow.yaml@test1
+     needs: check-changes
+     if: ${{ needs. check-changes.outputs.go == 'true' }}
+     with:
+    # Provide the location of project under working-directory
+      working-directory: spark/abstraction_layer/holding/
+     secrets:
+      passwd: ${{ secrets.NEXUS_PASSWD }}
